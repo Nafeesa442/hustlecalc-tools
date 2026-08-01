@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Rental Yield Calculator | Gross & Net ROI (Unlevered)</title>
+    <meta name="description" content="Professional rental yield calculator. Calculate gross yield, net yield (cap rate), and monthly cash flow from property value, monthly rent, expenses, and vacancy rate.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --theme: #0d9488;
+            --theme-dark: #0f766e;
+            --theme-light: #ecfdf5;
+            --theme-border: #a7f3d0;
+            --profit-green: #16a34a;
+            --loss-red: #dc2626;
+            --bg-light: #f8fafd;
+            --border-light: #e9ecef;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --shadow-card: 0 10px 30px rgba(0,0,0,0.08);
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 8px;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9eef5 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .calculator-container { max-width: 950px; margin: 0 auto; }
+        .header-card {
+            background: linear-gradient(135deg, var(--theme), var(--theme-dark));
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            margin-bottom: 30px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 20px 35px -10px rgba(13,148,136,0.35);
+        }
+        .header-card h1 {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -0.02em;
+        }
+        .header-card p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.18);
+            backdrop-filter: blur(4px);
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            margin-top: 15px;
+            letter-spacing: 0.01em;
+        }
+        .card {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            overflow: hidden;
+            margin-bottom: 30px;
+            border: 1px solid transparent;
+        }
+        .card-header {
+            padding: 25px 30px;
+            background: var(--bg-light);
+            border-bottom: 1px solid var(--border-light);
+        }
+        .card-header h2 {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.01em;
+        }
+        .card-header h2 i { color: var(--theme); }
+        .card-body { padding: 30px; }
+        .currency-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+            padding: 14px 18px;
+            background: var(--bg-light);
+            border-radius: 14px;
+            border: 1px solid var(--border-light);
+            flex-wrap: wrap;
+        }
+        .currency-row .c-label {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            white-space: nowrap;
+        }
+        .currency-row select {
+            border: 2px solid #e2e8f0;
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-size: 0.88rem;
+            background: white;
+            cursor: pointer;
+            max-width: 260px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+        .currency-row select:focus {
+            outline: none;
+            border-color: var(--theme);
+        }
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0 24px;
+        }
+        .input-group { margin-bottom: 24px; }
+        .input-label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #334155;
+            font-size: 0.9rem;
+            gap: 6px;
+        }
+        .input-label i {
+            color: var(--theme);
+            width: 16px;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .hint-text {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+        .field-wrap { position: relative; }
+        .f-prefix {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 500;
+            color: var(--text-muted);
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 1;
+            transition: all 0.2s ease;
+        }
+        .f-prefix.wide {
+            font-size: 0.78rem;
+            left: 10px;
+        }
+        .f-prefix.extra-wide {
+            font-size: 0.7rem;
+            left: 8px;
+        }
+        .f-suffix {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+            color: #94a3b8;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .input-field {
+            width: 100%;
+            padding: 13px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: white;
+            font-family: inherit;
+            color: var(--text-primary);
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: var(--theme);
+            box-shadow: 0 0 0 3px rgba(13,148,136,0.1);
+        }
+        .input-field::placeholder { color: #94a3b8; }
+        .input-field.with-pre { padding-left: 34px; transition: padding-left 0.2s ease; }
+        .input-field.with-pre.wide-pad { padding-left: 46px; }
+        .input-field.with-pre.extra-wide-pad { padding-left: 54px; }
+        .input-field.with-suf { padding-right: 44px; }
+        .input-field.highlight { background: var(--theme-light); border-color: var(--theme-border); }
+        .input-field.highlight:focus { border-color: var(--theme); }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 0 0 16px;
+        }
+        .result-card {
+            background: var(--bg-light);
+            border-radius: 20px;
+            padding: 20px 16px;
+            text-align: center;
+            border: 1px solid var(--border-light);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .result-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+        .result-label {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .result-value {
+            font-size: clamp(1.3rem, 3vw, 1.75rem);
+            font-weight: 700;
+            color: var(--theme);
+            line-height: 1.2;
+            word-break: break-word;
+        }
+        .result-value.loss { color: var(--loss-red); }
+        .result-sub {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 6px;
+        }
+        .loss-warning {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            padding: 12px 18px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            color: #991b1b;
+            font-size: 0.85rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        .loss-warning i { color: var(--loss-red); font-size: 1.1rem; flex-shrink: 0; }
+        .loss-warning.visible { display: flex; }
+        .disclaimer-note {
+            background: #fef9e3;
+            border-left: 4px solid #eab308;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 0.75rem;
+            color: #92400e;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            line-height: 1.5;
+        }
+        .disclaimer-note i { font-size: 1rem; color: #eab308; flex-shrink: 0; margin-top: 1px; }
+        .section-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #94a3b8;
+            margin-bottom: 12px;
+        }
+        .breakdown {
+            background: var(--bg-light);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            margin-bottom: 26px;
+        }
+        .bk-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 18px;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 0.85rem;
+        }
+        .bk-row:last-child { border-bottom: none; background: white; }
+        .bk-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .bk-label { flex: 1; color: var(--text-secondary); }
+        .bk-row:last-child .bk-label { font-weight: 600; color: var(--text-primary); }
+        .bk-val { font-weight: 600; font-size: 0.88rem; white-space: nowrap; }
+        .bk-val.green { color: var(--profit-green); }
+        .bk-val.red { color: var(--loss-red); }
+        .bk-val.loss-red { color: var(--loss-red); font-weight: 700; }
+        .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+        .btn {
+            padding: 12px 22px;
+            border-radius: 40px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.88rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--theme); color: white; }
+        .btn-primary:hover { background: var(--theme-dark); transform: translateY(-2px); box-shadow: 0 4px 14px rgba(13,148,136,0.35); }
+        .btn-outline { background: transparent; border: 2px solid #e2e8f0; color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--theme); color: var(--theme); background: var(--theme-light); }
+        .btn-outline:active { background: #ccfbf1; }
+        .embed-section {
+            background: var(--text-primary);
+            border-radius: 20px;
+            padding: 22px 26px;
+            color: #e2e8f0;
+            margin-top: 20px;
+        }
+        .embed-section h3 {
+            font-size: 0.95rem;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .embed-code {
+            background: #0f172a;
+            padding: 12px 16px;
+            border-radius: var(--radius-xs);
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
+            font-size: 0.73rem;
+            overflow-x: auto;
+            margin-bottom: 12px;
+            word-break: break-all;
+            line-height: 1.5;
+        }
+        .copy-btn {
+            background: #334155;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-xs);
+            color: white;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+        .copy-btn:hover { background: var(--text-secondary); }
+        .embed-note { font-size: 0.7rem; margin-top: 10px; opacity: 0.5; }
+
+         @media print {
+            body { background: white; padding: 0; }
+            .header-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .action-buttons, .embed-section { display: none; }
+            .card { box-shadow: none; }
+            .loss-warning { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+        @media (max-width: 768px) {
+            body { padding: 20px 12px; }
+            .card-body { padding: 20px; }
+            .card-header { padding: 20px; }
+            .header-card { padding: 24px 20px; border-radius: 20px; }
+            .input-grid { grid-template-columns: 1fr; gap: 0; }
+            .results-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+            .result-card { padding: 16px 10px; }
+            .result-value { font-size: 1.2rem; }
+            .action-buttons { flex-direction: column; }
+            .action-buttons .btn { width: 100%; justify-content: center; }
+            .currency-row select { width: 100%; max-width: 100%; }
+        }
+        @media (max-width: 480px) {
+            .results-grid { grid-template-columns: 1fr; }
+            .header-card h1 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="calculator-container">
+    <!-- Header -->
+    <div class="header-card">
+        <h1><i class="fas fa-chart-line" aria-hidden="true"></i> Rental Yield Calculator</h1>
+        <p>Gross &amp; net return (unlevered) – before mortgage &amp; taxes</p>
+        <div class="badge"><i class="fas fa-building" aria-hidden="true"></i> Cap rate · Cash‑on‑cash · NOI</div>
+    </div>
+
+    <!-- Main Calculator Card -->
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-building" aria-hidden="true"></i> Property &amp; Operating Data</h2>
+        </div>
+        <div class="card-body">
+            <!-- Currency Selector -->
+            <div class="currency-row">
+                <span class="c-label"><i class="fas fa-globe" aria-hidden="true"></i> Currency:</span>
+                <select id="currencySelect" aria-label="Select currency">
+                    <option value="$">$ USD – US Dollar</option>
+                    <option value="€">€ EUR – Euro</option>
+                    <option value="£">£ GBP – British Pound</option>
+                    <option value="A$">A$ AUD – Australian Dollar</option>
+                    <option value="C$">C$ CAD – Canadian Dollar</option>
+                    <option value="AED">AED – UAE Dirham</option>
+                    <option value="₨">₨ PKR – Pakistani Rupee</option>
+                </select>
+            </div>
+
+            <!-- Input Grid -->
+            <div class="input-grid">
+                <!-- Property Value -->
+                <div class="input-group">
+                    <div class="input-label"><i class="fas fa-home" aria-hidden="true"></i> Property Value</div>
+                    <div class="field-wrap">
+                        <span class="f-prefix" id="sym1" aria-hidden="true">$</span>
+                        <input type="number" id="propertyValue" class="input-field with-pre highlight" value="350000" step="10000" min="1" aria-label="Property value">
+                    </div>
+                    <div class="hint-text">Purchase price or current market value</div>
+                </div>
+
+                <!-- Monthly Rent -->
+                <div class="input-group">
+                    <div class="input-label"><i class="fas fa-dollar-sign" aria-hidden="true"></i> Monthly Rent</div>
+                    <div class="field-wrap">
+                        <span class="f-prefix" id="sym2" aria-hidden="true">$</span>
+                        <input type="number" id="monthlyRent" class="input-field with-pre highlight" value="2200" step="100" min="0" aria-label="Monthly rent">
+                    </div>
+                    <div class="hint-text">Expected monthly rental income</div>
+                </div>
+
+                <!-- Annual Expenses -->
+                <div class="input-group">
+                    <div class="input-label"><i class="fas fa-receipt" aria-hidden="true"></i> Annual Expenses</div>
+                    <div class="field-wrap">
+                        <span class="f-prefix" id="sym3" aria-hidden="true">$</span>
+                        <input type="number" id="annualExpenses" class="input-field with-pre" value="8500" step="500" min="0" aria-label="Annual expenses">
+                    </div>
+                    <div class="hint-text">Taxes, insurance, maintenance, HOA, property management</div>
+                </div>
+
+                <!-- Vacancy Rate -->
+                <div class="input-group">
+                    <div class="input-label"><i class="fas fa-percent" aria-hidden="true"></i> Vacancy Rate</div>
+                    <div class="field-wrap">
+                        <input type="number" id="vacancy" class="input-field with-suf" value="5" step="1" min="0" max="100" aria-label="Vacancy rate">
+                        <span class="f-suffix" aria-hidden="true">%</span>
+                    </div>
+                    <div class="hint-text">Expected % of time property is vacant</div>
+                </div>
+            </div>
+
+            <!-- Results Grid -->
+            <div class="results-grid">
+                <div class="result-card">
+                    <div class="result-label"><i class="fas fa-chart-bar" aria-hidden="true"></i> Gross Yield</div>
+                    <div class="result-value" id="grossYield" aria-live="polite">—</div>
+                    <div class="result-sub">Annual rent ÷ value</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label"><i class="fas fa-chart-pie" aria-hidden="true"></i> Net Yield (Cap Rate)</div>
+                    <div class="result-value" id="netYield" aria-live="polite">—</div>
+                    <div class="result-sub">After vacancy &amp; expenses</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label"><i class="fas fa-wallet" aria-hidden="true"></i> Monthly Cash Flow</div>
+                    <div class="result-value" id="monthlyCF" aria-live="polite">—</div>
+                    <div class="result-sub">Net operating income ÷ 12</div>
+                </div>
+            </div>
+
+            <!-- Loss Warning Banner -->
+            <div class="loss-warning" id="lossWarning" role="alert" aria-live="assertive">
+                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                <span id="lossWarningText">This property is operating at a loss. Review your rent, expenses, or purchase price.</span>
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="disclaimer-note">
+                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                <span><strong>Unlevered analysis:</strong> Cap rate and yield are pre‑tax, pre‑mortgage metrics. They measure the property's operating performance independent of financing. For leveraged returns, add your mortgage details. Taxes vary by investor — consult your accountant for after‑tax projections.</span>
+            </div>
+
+            <!-- Breakdown Section -->
+            <div class="section-label">Annual Breakdown</div>
+            <div class="breakdown" id="breakdownList" aria-live="polite">
+                <div class="bk-row">
+                    <div class="bk-dot" style="background:#16a34a" aria-hidden="true"></div>
+                    <div class="bk-label">Gross annual rent</div>
+                    <div class="bk-val green" id="grossRent">—</div>
+                </div>
+                <div class="bk-row">
+                    <div class="bk-dot" style="background:#f97316" aria-hidden="true"></div>
+                    <div class="bk-label">Vacancy loss</div>
+                    <div class="bk-val red" id="vacancyLoss">—</div>
+                </div>
+                <div class="bk-row">
+                    <div class="bk-dot" style="background:#ef4444" aria-hidden="true"></div>
+                    <div class="bk-label">Total operating expenses</div>
+                    <div class="bk-val red" id="expensesTotal">—</div>
+                </div>
+                <div class="bk-row">
+                    <div class="bk-dot" style="background:#0d9488" aria-hidden="true"></div>
+                    <div class="bk-label">Net operating income (NOI)</div>
+                    <div class="bk-val green" id="netIncome">—</div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="printBtn" aria-label="Print calculator results">
+                    <i class="fas fa-print" aria-hidden="true"></i> Print
+                </button>
+                <button class="btn btn-outline" id="resetBtn" aria-label="Reset all values to defaults">
+                    <i class="fas fa-undo-alt" aria-hidden="true"></i> Reset
+                </button>
+                <button class="btn btn-outline" id="shareBtn" aria-label="Share calculator as link">
+                    <i class="fas fa-share-alt" aria-hidden="true"></i> Share (copy link)
+                </button>
+            </div>
+
+
+                     <!-- ProfitCompassPro CTA -->
+            <div class="saas-cta" style="margin-top:20px;padding:14px 18px;background:linear-gradient(135deg, #f8fafd, #e9eef5);border-radius:14px;border:1px solid #e2e8f0;text-align:center;transition:all 0.2s ease;">
+                <span style="font-size:0.82rem;color:#475569;">
+                    <i class="fas fa-compass" style="color:var(--theme);margin-right:3px;"></i>
+                    <strong>ProfitCompassPro</strong> — Track all your side hustle profits in one dashboard.
+                    <a href="https://profitcompasspro.com?ref=CALCULATOR-SLUG&utm_source=embed&utm_medium=calculator" target="_blank" rel="noopener" style="color:var(--theme);font-weight:600;text-decoration:none;white-space:nowrap;">Try free →</a>
+                </span>
+            </div>
+
+
+        </div>
+    </div>
+
+    <!-- Embed Section -->
+    <div class="embed-section">
+        <h3><i class="fas fa-code" aria-hidden="true"></i> Embed This Calculator</h3>
+        <div class="embed-code" id="embedCode">&lt;iframe src="https://hustlecalc-tools.netlify.app/Real%20Estate%20Investor%20Bundle/Rental-Yield-Calculator.html" width="100%" height="850" frameborder="0"&gt;&lt;/iframe&gt;</div>
+        <button class="copy-btn" id="copyEmbedBtn" aria-label="Copy embed code to clipboard">
+            <i class="fas fa-copy" aria-hidden="true"></i> Copy Embed Code
+        </button>
+        <p class="embed-note">Paste into any website, blog, or property listing.</p>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    // ============================================================
+    // CONSTANTS
+    // ============================================================
+    var MONTHS_PER_YEAR = 12;
+    var sym = '$';
+
+    // ============================================================
+    // DOM HELPERS
+    // ============================================================
+    var g = function(id) { return document.getElementById(id); };
+    var v = function(id, def) {
+        def = def || 0;
+        var n = parseFloat(g(id).value);
+        return isNaN(n) ? def : n;
+    };
+    var clamp = function(x, lo, hi) {
+        return Math.min(hi, Math.max(lo, x));
+    };
+
+    // ============================================================
+    // FORMATTING FUNCTIONS
+    // ============================================================
+    // FIX #1: Minus sign BEFORE currency symbol
+    var fmtCurrency = function(n) {
+        var abs = Math.abs(n);
+        var formatted = sym + new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(abs);
+        return n < 0 ? '\u2212' + formatted : formatted;
+    };
+
+    var fmtPct = function(n) {
+        if (!isFinite(n)) return 'N/A';
+        return n.toFixed(1) + '%';
+    };
+
+    // ============================================================
+    // DYNAMIC CURRENCY PADDING (FIX #4)
+    // ============================================================
+    function adjustCurrencyPadding() {
+        var prefixes = document.querySelectorAll('.f-prefix');
+        var inputs = document.querySelectorAll('.input-field.with-pre');
+
+        prefixes.forEach(function(el) {
+            el.classList.remove('wide', 'extra-wide');
+        });
+        inputs.forEach(function(el) {
+            el.classList.remove('wide-pad', 'extra-wide-pad');
+        });
+
+        if (sym.length >= 3) {
+            prefixes.forEach(function(el) { el.classList.add('extra-wide'); });
+            inputs.forEach(function(el) { el.classList.add('extra-wide-pad'); });
+        } else if (sym.length >= 2) {
+            prefixes.forEach(function(el) { el.classList.add('wide'); });
+            inputs.forEach(function(el) { el.classList.add('wide-pad'); });
+        }
+    }
+
+    // ============================================================
+    // DEBOUNCED CALCULATION
+    // ============================================================
+    var timer;
+    var debounced = function() {
+        clearTimeout(timer);
+        timer = setTimeout(calc, 120);
+    };
+
+    // ============================================================
+    // MAIN CALCULATION ENGINE
+    // ============================================================
+    function calc() {
+        // --- INPUTS ---
+        var value = v('propertyValue', 1);
+        if (value <= 0) value = 1;
+        var monthlyRent = Math.max(0, v('monthlyRent'));
+        var annualExpenses = Math.max(0, v('annualExpenses'));
+        var vacancyPct = clamp(v('vacancy'), 0, 100);
+
+        // --- DERIVED VALUES ---
+        var grossAnnual = monthlyRent * MONTHS_PER_YEAR;
+        var vacancyLoss = grossAnnual * (vacancyPct / 100);
+        var effectiveRent = grossAnnual - vacancyLoss;
+        var netIncome = effectiveRent - annualExpenses;
+
+        var grossYield = (grossAnnual / value) * 100;
+        var netYield = (netIncome / value) * 100;
+        var monthlyCF = netIncome / MONTHS_PER_YEAR;
+
+        // --- STATUS FLAGS ---
+        var isLoss = netIncome < 0;
+        var isBreakEven = netIncome === 0;
+
+        // --- RESULTS DISPLAY (FIX #2: Visual loss distinction) ---
+        g('grossYield').textContent = fmtPct(grossYield);
+        g('grossYield').className = 'result-value'; // Gross yield is never negative
+
+        g('netYield').textContent = fmtPct(netYield);
+        g('netYield').className = 'result-value' + (isLoss ? ' loss' : '');
+
+        g('monthlyCF').textContent = fmtCurrency(monthlyCF);
+        g('monthlyCF').className = 'result-value' + (isLoss ? ' loss' : '');
+
+        // --- LOSS WARNING BANNER (FIX #3) ---
+        var lossWarning = g('lossWarning');
+        if (isLoss) {
+            lossWarning.classList.add('visible');
+            g('lossWarningText').textContent = '\u26a0\ufe0f This property has a NEGATIVE net operating income of ' + fmtCurrency(Math.abs(netIncome)) + '/year (' + fmtCurrency(Math.abs(monthlyCF)) + '/month). You are losing money each month. Review your rent, expenses, or purchase price.';
+        } else if (isBreakEven) {
+            lossWarning.classList.add('visible');
+            g('lossWarningText').textContent = '\u26a0\ufe0f This property is breaking even (NOI = ' + fmtCurrency(0) + '). There is no cash flow cushion for unexpected repairs or vacancies.';
+        } else {
+            lossWarning.classList.remove('visible');
+        }
+
+        // --- BREAKDOWN ---
+        g('grossRent').textContent = fmtCurrency(grossAnnual);
+        g('grossRent').className = 'bk-val green';
+
+        g('vacancyLoss').textContent = fmtCurrency(vacancyLoss);
+        g('vacancyLoss').className = 'bk-val' + (vacancyLoss > 0 ? ' red' : '');
+
+        g('expensesTotal').textContent = fmtCurrency(annualExpenses);
+        g('expensesTotal').className = 'bk-val' + (annualExpenses > 0 ? ' red' : '');
+
+        g('netIncome').textContent = fmtCurrency(netIncome);
+        g('netIncome').className = 'bk-val ' + (isLoss ? 'loss-red' : 'green');
+    }
+
+    // ============================================================
+    // EVENT LISTENERS
+    // ============================================================
+
+    // Currency change
+    g('currencySelect').addEventListener('change', function() {
+        sym = this.value;
+        var prefixIds = ['sym1', 'sym2', 'sym3'];
+        prefixIds.forEach(function(id) {
+            var el = g(id);
+            if (el) el.textContent = sym;
+        });
+        adjustCurrencyPadding();
+        calc();
+    });
+
+    // All number inputs — debounced recalculation
+    var numberInputs = document.querySelectorAll('input[type="number"]');
+    numberInputs.forEach(function(el) {
+        el.addEventListener('input', debounced);
+    });
+
+    // Print
+    g('printBtn').addEventListener('click', function() {
+        window.print();
+    });
+
+    // Reset
+    g('resetBtn').addEventListener('click', function() {
+        g('propertyValue').value = '350000';
+        g('monthlyRent').value = '2200';
+        g('annualExpenses').value = '8500';
+        g('vacancy').value = '5';
+        g('currencySelect').value = '$';
+        sym = '$';
+        var prefixIds = ['sym1', 'sym2', 'sym3'];
+        prefixIds.forEach(function(id) {
+            var el = g(id);
+            if (el) el.textContent = sym;
+        });
+        adjustCurrencyPadding();
+        calc();
+    });
+
+    // Share — copy URL with parameters
+    g('shareBtn').addEventListener('click', function() {
+        var p = new URLSearchParams({
+            pv: g('propertyValue').value,
+            mr: g('monthlyRent').value,
+            ae: g('annualExpenses').value,
+            vac: g('vacancy').value,
+            cu: sym
+        });
+        var url = window.location.href.split('?')[0] + '?' + p.toString();
+        navigator.clipboard.writeText(url).then(function() {
+            var btn = g('shareBtn');
+            var orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            setTimeout(function() { btn.innerHTML = orig; }, 2000);
+        }).catch(function() {
+            prompt('Copy this link:', url);
+        });
+    });
+
+    // Embed copy
+    g('copyEmbedBtn').addEventListener('click', function() {
+        navigator.clipboard.writeText(g('embedCode').textContent).then(function() {
+            var btn = g('copyEmbedBtn');
+            var orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            setTimeout(function() { btn.innerHTML = orig; }, 2000);
+        });
+    });
+
+    // ============================================================
+    // LOAD PARAMETERS FROM URL
+    // ============================================================
+    (function loadParams() {
+        var p = new URLSearchParams(window.location.search);
+        if (!p.has('pv')) return;
+
+        var set = function(id, key) {
+            if (p.has(key)) g(id).value = p.get(key);
+        };
+
+        set('propertyValue', 'pv');
+        set('monthlyRent', 'mr');
+        set('annualExpenses', 'ae');
+        set('vacancy', 'vac');
+
+        if (p.has('cu')) {
+            sym = p.get('cu');
+            g('currencySelect').value = sym;
+        }
+
+        var prefixIds = ['sym1', 'sym2', 'sym3'];
+        prefixIds.forEach(function(id) {
+            var el = g(id);
+            if (el) el.textContent = sym;
+        });
+    })();
+
+    // ============================================================
+    // INITIALIZATION
+    // ============================================================
+    adjustCurrencyPadding();
+    calc();
+})();
+</script>
+</body>
+</html>
